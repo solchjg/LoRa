@@ -56,9 +56,9 @@ whether the board was inside the planned enclosure, because an enclosure costs a
   moves on after a timeout.
 - **Radio settings, US 902 – 928 MHz**, the same rules LoRaWAN's US915 plan follows.
   At 125 kHz, FCC part 15.247 allows LoRa as a hybrid system: it hops over the 8
-  channels from 902.3 to 903.7 MHz (200 kHz apart, TTN's sub-band 2), and each packet
+  channels from 902.3 to 903.7 MHz (200 kHz apart, sub-band 1, which keeps it off the sub-band 2 that TTN and Helium gateways listen on), and each packet
   stays under 400 ms on air. That keeps 125 kHz to **SF7 – SF10**, with a ping of at
-  most 11 bytes at SF10. **SF11 and SF12 run at 500 kHz** on 904.6 MHz, which as a
+  most 11 bytes at SF10. **SF11 and SF12 run at 500 kHz** on 903.0 MHz, which as a
   wideband (DTS) signal needs no hopping and costs about 6 dB of sensitivity. Both ends
   pick the channel from the sequence number, so they always agree. It sends at 20 dBm.
   **[proposed]**
