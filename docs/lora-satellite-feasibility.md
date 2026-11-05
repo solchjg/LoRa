@@ -17,10 +17,11 @@ row says *approx.*, which means I could not confirm it today and it needs a quot
   pays off for a *cluster* of sites within a few km of one place that has power and
   internet (one gateway, ~$25 per node, $0 – 1 a year in data). For a single isolated
   site it helps only if public LoRaWAN coverage (Helium or TTN) is confirmed there.
-- **Not recommended per sensor:** Iridium via RockBLOCK (monthly line rental and
-  50-byte credits make it 10 – 20× Blues' price at our volumes), Starlink (20 – 40 W,
-  so it is only a backhaul for a powered hub), Myriota (new stack, no Notehub path,
-  pricing by quote). Swarm is no longer offered.
+- **Not recommended per sensor:** Starlink (20 – 40 W, so it is only a backhaul for a
+  powered hub), Myriota (new stack, no Notehub path, pricing by quote). Swarm is no
+  longer offered. Iridium (Starnote for Iridium, RockBLOCK) is out of scope by the
+  user's choice, so satellite means Skylo: a clear view of the southern sky in a
+  country Skylo serves.
 
 ## What we would send
 
@@ -44,8 +45,6 @@ turn the daily summary into a short email if wanted.
 |---|---|---|---|---|---|
 | **Notecard for Skylo** (cell + Skylo satellite in one card) | US and other Skylo countries; GEO, needs a clear view of the southern sky | 50 – 256 bytes (50 billed minimum) | minutes | **$89**, plugs into the Notecarrier-X we have | 500 MB cellular for 10 years included; satellite 10 KB included, then **$0.00075/byte** |
 | **Starnote for Skylo** (add-on to a cellular Notecard) | same | same | minutes | **$49** + Notecarrier XS **$15** (the X v1.3 can't hold a Starnote) | same |
-| **Starnote for Iridium** | global, poles included; LEO, open sky | 10 – 10,000 bytes up, 340 down (10 billed minimum) | minutes | **$409 kit** (Starnote, Notecard Cell+WiFi, Notecarrier XI with supercaps, helical antenna, 5000 mAh LiPo) | 10 KB included, then **$0.00075/byte**, no monthly fee |
-| Iridium SBD via RockBLOCK 9603 | global | up to 340 bytes, billed in 50-byte credits | ~1 min | ~$280 – 300 module *(approx.)* | line rental ~$15/month in months used + ~$0.05 – 0.15 per credit *(approx.)* |
 | Myriota (UltraLite / HyperPulse) | global / US | 20 – 1,500 bytes | minutes to hours | module and dev kit by quote | plans from $0.99/month per device (UltraLite); HyperPulse not published |
 | Starlink Mini | almost everywhere | IP, unlimited | ms | ~$200 – 500 dish *(approx.)*, 20 – 40 W | ~$5 – 50+/month depending on plan *(approx.)* |
 | **LoRaWAN, public** (Helium, TTN) | only where a gateway hears you; check the coverage maps on site | US915: 11 bytes at SF10, 53 at SF9, 125+ at SF8 and faster | seconds | RAK3172-class module + antenna, ~$25 – 35 *(approx.)* | Helium **$0.00001 per 24 bytes**; TTN free within fair use (30 s airtime a day, 10 downlinks) |
@@ -57,12 +56,12 @@ turn the daily summary into a short email if wanted.
 Steady state, after the 10 KB that ships with each Blues satellite part (worth about
 $7.50) is used up. Blues adds a few framing bytes per packet; add about 5 %.
 
-| Pattern | Starnote / Notecard for Skylo | Starnote for Iridium | RockBLOCK *(approx.)* | LoRaWAN (Helium) |
-|---|---|---|---|---|
-| A. Daily summary + ~2 alerts a month | **~$15** | **~$9** | ~$220 | < $0.01 |
-| B. Four 6-hour batches a day | ~$70 | ~$70 | ~$470 | < $0.10 |
-| C. Hourly batch of 6 readings | ~$420 | ~$420 | ~$1,900 | ~$0.10 |
-| D. Every reading on its own (144 a day) | ~$1,970 (50-byte minimum) | ~$390 | ~$5,400 | ~$0.53 |
+| Pattern | Starnote / Notecard for Skylo | LoRaWAN (Helium) |
+|---|---|---|
+| A. Daily summary + ~2 alerts a month | **~$15** | < $0.01 |
+| B. Four 6-hour batches a day | ~$70 | < $0.10 |
+| C. Hourly batch of 6 readings | ~$420 | ~$0.10 |
+| D. Every reading on its own (144 a day) | ~$1,970 (50-byte minimum) | ~$0.53 |
 
 Downlinks are billed too, so settings stay local (portal and BLE), never over satellite.
 
@@ -76,7 +75,6 @@ estimate until sleep current is measured). Against that:
 | Notecard cellular, for comparison (§33.2) | one sync about 0.28 mAh | about 10 mAh at hourly syncs |
 | LoRa at 20 dBm | SF7 ~56 ms ≈ 0.002 mAh; SF10 ~370 ms ≈ 0.012 mAh | 0.3 – 1.8 mAh for all 144 readings; module sleeps at ~2 µA |
 | Skylo (NB-IoT NTN to GEO) | not published; longer transmissions than a cellular sync | measure on the bench; pattern A should stay small |
-| Iridium (Certus 9704 on the Notecarrier XI) | not published; bursts are fed from supercaps, and the kit ships a 5000 mAh cell | measure on the bench before sizing the battery |
 
 LoRa is the lightest by far. Satellite is fine at pattern A on the Notecard's own LiPo,
 but needs a measurement before anything denser is promised.
@@ -98,11 +96,11 @@ but needs a measurement before anything denser is promised.
   every satellite note's size.
 
 Hardware: **Notecard for Skylo** drops into the Notecarrier-X v1.3 we already have,
-same I2C address 0x17, no wiring change. The Starnotes need a different carrier (XS
-for Skylo, XI for Iridium), which also joins on Qwiic. One conflict to settle: §33.2
+same I2C address 0x17, no wiring change. The Starnote for Skylo needs a different carrier
+(the XS), which also joins on Qwiic. One conflict to settle: §33.2
 names the MBGLW Notecard as a `[user]` choice, and the "Choose vendor-neutral cellular
 option" thread is weighing a move away from Blues. Satellite
-through Blues deepens that dependency; satellite without Blues (RockBLOCK, Myriota)
+through Blues deepens that dependency; satellite without Blues (Myriota)
 means a new UART transport, a new backend path and much higher cost.
 
 **LoRaWAN: new shared component, new backend path.**
@@ -130,14 +128,14 @@ encryption) and its tests.
 
 1. **Keep cellular (§33) as the default** for any site with coverage.
 2. **For sites without cellular, use Blues satellite with pattern A** (daily summary
-   plus alerts, about $15 a year): Notecard for Skylo in the US with a southern sky
-   view, Starnote for Iridium where the sky is obstructed, at high latitude, or outside
-   Skylo's countries. Full 10-minute data stays on the device and comes home over BLE
+   plus alerts, about $15 a year): Notecard for Skylo, where the site has a clear view
+   of the southern sky in a country Skylo serves. A site without that stays on
+   cellular or LoRa. Full 10-minute data stays on the device and comes home over BLE
    on a visit or when cellular returns.
 3. **Use LoRaWAN only for clusters**: three or more sites within a few km of a building
    with power and internet. One gateway on TTN, about $25 – 35 per node, no data bill.
    Choose point-to-point instead if there is only one or two nodes and a WiFi base nearby.
-4. **Skip** RockBLOCK, Myriota and per-sensor Starlink for now. Starlink is worth it
+4. **Skip** Myriota and per-sensor Starlink for now. Starlink is worth it
    only as backhaul for a LoRa gateway at a powered hub with no other internet.
 
 What decides it per site: whether cellular reaches it, whether other sites are within
@@ -151,15 +149,10 @@ measurement of the chosen radio.
 - Blues: [Satellite constraints](https://dev.blues.io/connected-product-guidebook/firmware-best-practices-guide/#understanding-satellite-constraints),
   [packet sizes](https://dev.blues.io/support/diagnosing-satellite-connectivity-issues/#check-your-packet-sizes),
   [Notecarrier requirements](https://dev.blues.io/support/diagnosing-satellite-connectivity-issues/#notecarrier-requirements),
-  [Starnote for Iridium](https://dev.blues.io/blog/pole-to-pole-starnote-for-iridium/),
-  [Starnote for Iridium datasheet](https://dev.blues.io/datasheets/starnote-datasheet/starnote-for-iridium/),
-  [Starnote for Iridium kit ($409)](https://shop.blues.com/products/starnote-for-iridium-kit),
   [Notecarrier XS ($15)](https://shop.blues.com/products/notecarrier-xs),
   [Two-template pattern](https://dev.blues.io/blog/get-ready-for-starnote/#2-minimize-how-often-you-send-data-over-satellite)
 - [CNX Software: Notecard for Skylo ($89)](https://www.cnx-software.com/2026/03/11/blues-notecard-for-skylo-iot-module-offers-5g-ntn-satellite-nb-iot-lte-m-cellular-wifi-and-gnss-connectivity/)
 - [Hackster: Starnote for Skylo ($49)](https://hackster.io/news/blues-partners-with-skylo-on-the-49-starnote-offering-low-cost-satellite-connectivity-for-the-iot-dc20b93ef287)
-- [Ground Control: Iridium contract costs](https://docs.groundcontrol.com/iot/rockblock/web-services/iridium-contract-costs)
-  (credit = 50 bytes; prices by quote)
 - [Helium data credits](https://docs.helium.com/tokens/data-credit)
 - [TTN fair use policy](https://thethingsnetwork.org/forum/t/the-things-network-fair-use-policy/47689)
 - [Myriota FAQ](https://myriota.com/faqs/)
