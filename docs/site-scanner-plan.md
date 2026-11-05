@@ -84,18 +84,23 @@ then come only from the Helium console.
 
 ## The report
 
-The field unit opens its own WiFi access point (`site-scan-XXXX`). A phone joins it and
-opens a page with:
+The phone talks to the field unit over **Bluetooth**, from a web page (`web/index.html`,
+served over HTTPS from GitHub Pages). It works in Chrome on Android, and in the Bluefy
+browser on an iPhone, since Safari has no Web Bluetooth. The phone keeps its own
+internet, and the page can use the phone's GPS. The link is paired once with a 6-digit
+code shown on the board's screen, the same way the T-Display's Bluetooth setup works
+(the shared `ble_setup` component). The page has:
 
-1. **Spot details**: site name, spot name, mounting height, enclosure yes or no. Position
-   comes from the GPS board. On the V3, the latitude and longitude are pasted from the
-   phone's map, because a browser doesn't share its location over plain HTTP.
+1. **Spot details**: site name, spot name, mounting height, enclosure yes or no, notes.
+   Position comes from the phone's GPS with one button (or from the GPS board later).
 2. **Run tests**: a button for each test and one for "all". It shows progress. The OLED
    shows the same, so a run also works without a phone, started with the PRG key.
 3. **Results table**: one row per connection, with the verdict and its key numbers.
-4. **Summary**: which connections are usable at the spot, best first.
-5. **Download**: the spot report as Markdown (to paste into notes) and the raw readings as
-   CSV. Reports are kept in flash, so several spots can be scanned and downloaded later.
+4. **Keys and WiFi**: the LoRaWAN keys for TTN and Helium and the WiFi network to try,
+   stored on the board. They are written over the paired link and never read back.
+5. **Download**: the spot report as Markdown (to paste into notes) and every spot's
+   readings as CSV. Reports are kept in flash, so several spots can be scanned and
+   downloaded later.
 
 Example rows:
 
@@ -112,9 +117,9 @@ RadioLib for the SX1262 and the probes' SSD1306 screen.
 
 | Phase | Adds | Hardware |
 |---|---|---|
-| 1 | The scanner frame: access point, report page, spot details, flash storage, Markdown and CSV download; the WiFi test; the LoRaWAN survey moved in as a test | Heltec V3 |
-| 2 | The base beacon firmware and the P2P test | V3 + first GPS board |
-| 3 | GPS position on the report; the GPS board's pins (and its screen, if it differs) | GPS board |
+| 1 | The scanner frame: the Bluetooth page, spot details, flash storage, Markdown and CSV download; the WiFi test; the LoRaWAN survey moved in as a test | Heltec V3 |
+| 2 | The base beacon firmware and the P2P test. Direction: the bearing and distance to a beacon or gateway whose position is known, and a "turn slowly" test that plots signal strength against the phone's compass heading (sharper with a small directional antenna) | V3 + first GPS board |
+| 3 | GPS position from the board; the GPS board's pins (and its screen, if it differs) | GPS board |
 | later | Cellular and satellite tests | Notecard parts |
 
 Phase 1 can be built and field-tested now. Phase 2 can be written now and tested when the
@@ -128,8 +133,8 @@ first GPS board arrives.
   each with its own device registration and keys, and report a verdict for each.
 - **SCN-2** [proposed] Each test shall give a verdict (Good, Marginal, Not usable, Not
   tested) by the pass marks above, with the measured values.
-- **SCN-3** [proposed] The field unit shall serve a report page from its own access point,
-  and show progress and verdicts on its screen.
+- **SCN-3** [proposed] The field unit shall be run and read from a Web Bluetooth page
+  (Chrome on Android, Bluefy on iPhone), and show progress and verdicts on its screen.
 - **SCN-4** [proposed] A spot report shall carry the spot details and position, and be
   downloadable as Markdown and CSV. At least 20 spots are kept in flash.
 - **SCN-5** [proposed] The P2P test shall run between a field unit and a base beacon, hop
