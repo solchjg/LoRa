@@ -23,10 +23,20 @@ jobs:
   firmware:
     runs-on: ubuntu-latest
     container: espressif/idf:v6.0.2
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - program: scanner
+            artifact: site-scanner
+            image: site_scanner.bin
+          - program: survey
+            artifact: lora-survey
+            image: lora_survey.bin
     defaults:
       run:
         shell: bash
-        working-directory: firmware/scanner
+        working-directory: firmware/${{ matrix.program }}
     steps:
       - name: Trust the workspace
         working-directory: /
@@ -41,9 +51,9 @@ jobs:
           idf.py -B build -DSDKCONFIG=$PWD/build/sdkconfig build
       - uses: actions/upload-artifact@v4
         with:
-          name: site-scanner
+          name: ${{ matrix.artifact }}
           path: |
-            firmware/scanner/build/flash_args
-            firmware/scanner/build/site_scanner.bin
-            firmware/scanner/build/bootloader/bootloader.bin
-            firmware/scanner/build/partition_table/partition-table.bin
+            firmware/${{ matrix.program }}/build/flash_args
+            firmware/${{ matrix.program }}/build/${{ matrix.image }}
+            firmware/${{ matrix.program }}/build/bootloader/bootloader.bin
+            firmware/${{ matrix.program }}/build/partition_table/partition-table.bin

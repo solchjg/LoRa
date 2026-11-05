@@ -1,0 +1,8 @@
+# Copy to sdkconfig.keys (ignored by git), fill in from the network's console,
+# and build with:
+#   idf.py -B build -DSDKCONFIG=$PWD/build/sdkconfig \
+#          -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.keys" build
+CONFIG_SURVEY_DEV_EUI="70B3D57ED0000000"
+CONFIG_SURVEY_JOIN_EUI="0000000000000000"
+CONFIG_SURVEY_APP_KEY="00000000000000000000000000000000"
+CONFIG_SURVEY_NWK_KEY=""

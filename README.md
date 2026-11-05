@@ -12,5 +12,5 @@ Work on LoRa links for the remote sensor sites of
   scanner (phase 1: WiFi, The Things Network and Helium). The firmware is
   `firmware/scanner`, the phone page `web/index.html`, the pure core
   `components/scan_core` (host tests in `tests/host`).
-- The LoRaWAN site survey program for the Heltec is `commissioning/lora-survey` in
-  tdisplay-s3-amoled (`docs/Method/project/lora-survey.md` there).
+- [docs/survey.md](docs/survey.md): the LoRaWAN site survey for the Heltec, which checks
+  a site's TTN or Helium coverage with LinkCheck. The firmware is `firmware/survey`.
