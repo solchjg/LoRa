@@ -16,7 +16,7 @@ well. The question is **feasibility at that location**. Cost is out of scope for
 | **WiFi** | Yes | the Heltec WiFi LoRa 32 V3 alone |
 | **LoRaWAN** (TTN, Helium) | Yes | the Heltec alone (the survey in `firmware/survey` moves in as one test) |
 | **LoRa point-to-point** | Yes | two Heltec boards: a **field unit** at the location and a **base beacon** where the data would land |
-| Cellular, satellite | Later | Notecard on I2C, Notecard for Skylo, Starnote for Iridium (see the feasibility analysis) |
+| Cellular, satellite | Later | Notecard on I2C, Notecard for Skylo (see the feasibility analysis) |
 
 **Boards.** The Heltec V3 on hand is the first unit. The GPS Heltec boards on order become
 the field units when they arrive: their GPS stamps each spot's position, so nothing has
