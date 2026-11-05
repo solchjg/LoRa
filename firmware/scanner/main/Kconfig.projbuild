@@ -1,0 +1,32 @@
+menu "Site scanner"
+
+config SCAN_SUBBAND
+    int "US915 sub-band for LoRaWAN (TTN and Helium in the US use 2)"
+    range 1 8
+    default 2
+
+config SCAN_TX_DBM
+    int "LoRa transmit power in dBm"
+    range 2 22
+    default 20
+
+config SCAN_ROUNDS
+    int "LoRaWAN ladder rounds per network"
+    range 1 10
+    default 3
+    help
+        A round sends SF7 first and moves to SF8, SF9 and SF10 only while no
+        answer comes. Three rounds stay well inside The Things Network's fair
+        use (30 s of airtime and 10 downlinks a day).
+
+config SCAN_JOIN_TRIES
+    int "LoRaWAN join attempts per network"
+    range 1 10
+    default 3
+
+config SCAN_WIFI_ATTEMPTS
+    int "WiFi connect attempts"
+    range 1 10
+    default 3
+
+endmenu

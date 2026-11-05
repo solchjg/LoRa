@@ -1,0 +1,23 @@
+# Heltec WiFi LoRa 32 V3: ESP32-S3, 8 MB flash, console on UART0 through the
+# board's USB-UART bridge.
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+# RadioLib's ESP-IDF HAL times the LoRaWAN receive windows with delay(): 1 ms tick.
+CONFIG_FREERTOS_HZ=1000
+
+# Bluetooth link to the page (shared ble_setup): NimBLE, one central, bonds kept
+# so a phone pairs once.
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+# GATT client (needs the central role): confirms the indication a phone sends on
+# connecting; unconfirmed, the phone drops the link after 30 s (ble_setup.h).
+CONFIG_BT_NIMBLE_ROLE_CENTRAL=y
+CONFIG_BT_NIMBLE_GATT_CLIENT=y
+CONFIG_BT_NIMBLE_ROLE_OBSERVER=n
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
+CONFIG_BT_NIMBLE_NVS_PERSIST=y
+CONFIG_BT_NIMBLE_MAX_BONDS=3
+CONFIG_BLE_SETUP_BOND=y
+CONFIG_BLE_SETUP_BODY_MAX=2048

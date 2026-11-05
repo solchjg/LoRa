@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site scanner</title>
+<style>
+  :root { --bg:#fafaf9; --fg:#1c1917; --muted:#57534e; --line:#d6d3d1; --accent:#2563eb; --bad:#b91c1c; --warn:#a16207; --good:#15803d; --field:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1c1917; --fg:#f5f5f4; --muted:#a8a29e; --line:#44403c; --accent:#60a5fa; --bad:#f87171; --warn:#facc15; --good:#4ade80; --field:#292524; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width:620px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.4rem; margin:0 0 4px; }
+  h2 { font-size:1.1rem; margin:28px 0 4px; padding-top:12px; border-top:1px solid var(--line); }
+  p.lead, .hint { color:var(--muted); }
+  p.lead { margin:0 0 16px; } .hint { font-size:.85rem; margin:4px 0; }
+  button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  button.quiet { background:transparent; color:var(--accent); }
+  button.small { padding:4px 10px; font-size:.85rem; }
+  button:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+  label { display:block; margin:12px 0 4px; font-weight:600; font-size:.9rem; }
+  input, select { width:100%; font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--field); color:var(--fg); }
+  input:user-invalid { border-color:var(--bad); }
+  .two { display:flex; gap:12px; flex-wrap:wrap; } .two > div { flex:1 1 140px; }
+  #info { color:var(--muted); font-size:.9rem; overflow-wrap:anywhere; }
+  #step { font-weight:600; }
+  #status { margin-top:16px; min-height:1.5em; position:sticky; bottom:0; background:var(--bg); padding:8px 0; }
+  .bad { color:var(--bad); } .good { color:var(--good); } .warn { color:var(--warn); }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .scroll { overflow-x:auto; }
+  pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:.8rem; background:var(--field); border:1px solid var(--line); border-radius:8px; padding:8px; max-height:420px; overflow-y:auto; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Site scanner</h1>
+  <p class="lead">Tests WiFi, The Things Network and Helium at one spot, and keeps a report for each spot. Use Chrome on Android, or Bluefy on iPhone. When asked, type the 6-digit code the board shows.</p>
+  <div class="row">
+    <button id="connect">Connect to scanner</button>
+  </div>
+  <div id="info"></div>
+  <div id="step"></div>
+
+  <div id="app" hidden>
+    <h2>Spot</h2>
+    <p class="hint">Fill in where the board is, then save. "New spot" starts a fresh report; "Save" changes the current one.</p>
+    <div class="two">
+      <div><label for="site">Site</label><input id="site" maxlength="31" required></div>
+      <div><label for="spot">Spot</label><input id="spot" maxlength="31" required></div>
+    </div>
+    <div class="two">
+      <div><label for="height">Mounting height (m)</label><input id="height" type="number" min="0" max="100" step="0.1" inputmode="decimal"></div>
+      <div><label for="enclosure">In the planned enclosure</label>
+        <select id="enclosure"><option value="">Not known</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <label for="notes">Notes</label><input id="notes" maxlength="63">
+    <div class="two">
+      <div><label for="lat">Latitude</label><input id="lat" inputmode="decimal" pattern="-?\d{1,2}(\.\d{1,6})?"></div>
+      <div><label for="lon">Longitude</label><input id="lon" inputmode="decimal" pattern="-?\d{1,3}(\.\d{1,6})?"></div>
+    </div>
+    <p class="hint" id="acchint"></p>
+    <div class="row">
+      <button id="gps" class="quiet" type="button">Use phone position</button>
+      <button id="save" type="button">Save</button>
+      <button id="newspot" class="quiet" type="button">New spot</button>
+    </div>
+
+    <h2>Run tests</h2>
+    <p class="hint">A full run takes a few minutes. The board's screen shows the same progress, and a short press of PRG runs all tests without a phone.</p>
+    <div class="row">
+      <button data-run="all">All</button>
+      <button data-run="wifi" class="quiet">WiFi</button>
+      <button data-run="ttn" class="quiet">TTN</button>
+      <button data-run="helium" class="quiet">Helium</button>
+    </div>
+
+    <h2>Results</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Connection</th><th>Verdict</th></tr></thead>
+      <tbody id="verdicts"></tbody>
+    </table></div>
+    <div class="row"><button id="showmd" class="quiet small" type="button">Show the full report</button></div>
+    <pre id="md" hidden></pre>
+
+    <h2>Spots</h2>
+    <p class="hint">Every spot kept on the board (at most 20; the oldest goes first). Open one to see or retest it.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>#</th><th>Site / spot</th><th>Time</th><th>WiFi</th><th>TTN</th><th>Helium</th><th></th></tr></thead>
+      <tbody id="spots"></tbody>
+    </table></div>
+    <div class="row">
+      <button id="dlcsv" type="button">Download all as CSV</button>
+      <button id="clear" class="quiet" type="button">Delete all spots</button>
+    </div>
+
+    <h2>Keys and WiFi</h2>
+    <p class="hint">Stored on the board and never read back. Leave a key box empty to keep the stored key; type "clear" to remove it.</p>
+    <h3>The Things Network</h3>
+    <div class="two">
+      <div><label for="ttn_deveui">DevEUI</label><input id="ttn_deveui" class="key" data-bytes="8"></div>
+      <div><label for="ttn_joineui">JoinEUI</label><input id="ttn_joineui" class="key" data-bytes="8"></div>
+    </div>
+    <label for="ttn_appkey">AppKey</label><input id="ttn_appkey" class="key secret" data-bytes="16" type="password">
+    <label for="ttn_nwkkey">NwkKey (LoRaWAN 1.1)</label><input id="ttn_nwkkey" class="key secret" data-bytes="16" type="password">
+    <h3>Helium</h3>
+    <div class="two">
+      <div><label for="hel_deveui">DevEUI</label><input id="hel_deveui" class="key" data-bytes="8"></div>
+      <div><label for="hel_joineui">JoinEUI</label><input id="hel_joineui" class="key" data-bytes="8"></div>
+    </div>
+    <label for="hel_appkey">AppKey</label><input id="hel_appkey" class="key secret" data-bytes="16" type="password">
+    <div class="row"><button id="savekeys" type="button">Save keys</button></div>
+    <h3>WiFi to test</h3>
+    <label for="wifi_ssid">Network name</label><input id="wifi_ssid" maxlength="32">
+    <label for="wifi_pass">Password</label><input id="wifi_pass" type="password" maxlength="64">
+    <label for="wifi_url">URL to fetch once connected</label><input id="wifi_url" type="url" maxlength="200" placeholder="https://tb.example.org">
+    <div class="row"><button id="savewifi" type="button">Save WiFi</button></div>
+  </div>
+  <div id="status" role="status"></div>
+</main>
+<script>
+// The board speaks the shared ble_setup protocol: every value is a URL-encoded
+// form body. A command is written to `settings` and run by `control` "apply";
+// `result` answers "ok", "busy" or "invalid=<field>". `settings` reads page in
+// 512 bytes with `control` "read=<offset>". `history` reads return whole lines
+// from the line `control` "hist=<n>" chose; "range=" picks what they carry:
+// "spots" (index|site|spot|time|wifi|ttn|helium), "csv", or "md=<slot>".
+const BASE = (x) => `6e0a00${x}-7d3b-4c2a-9f1e-54445333424c`;
+const SVC = BASE('01');
+const UUIDS = { info: BASE('02'), settings: BASE('03'), result: BASE('04'), control: BASE('05'), history: BASE('06') };
+const enc = new TextEncoder(), dec = new TextDecoder();
+const $ = (id) => document.getElementById(id);
+let device, chars = {}, info = new URLSearchParams(), stored = {}, accuracy = 0, poll = null, queue = Promise.resolve();
+
+function status(text, cls = '') { const s = $('status'); s.textContent = text; s.className = cls; }
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function bounded(p, ms, what) {
+  let t;
+  return Promise.race([p, new Promise((_, no) => { t = setTimeout(() => no(new Error(`${what}: no answer`)), ms); })])
+    .finally(() => clearTimeout(t));
+}
+// One GATT operation at a time: the progress poll and a button press must not interleave.
+function serial(fn) { const run = queue.then(fn, fn); queue = run.catch(() => {}); return run; }
+const ctl = (text) => chars.control.writeValueWithResponse(enc.encode(text));
+
+async function readSettings() {
+  let out = '', off = 0;
+  for (;;) {
+    await ctl(`read=${off}`);
+    const page = dec.decode(await chars.settings.readValue());
+    out += page;
+    if (enc.encode(page).length < 512) return new URLSearchParams(out);
+    off += 512;
+  }
+}
+async function readHistory(range) {
+  await ctl(`range=${range}`);
+  const lines = [];
+  for (let n = 0; ; ) {
+    await ctl(`hist=${n}`);
+    const text = dec.decode(await chars.history.readValue());
+    if (!text) return lines;
+    const got = text.split('\n'); if (got[got.length - 1] === '') got.pop();
+    lines.push(...got); n += got.length;
+  }
+}
+// Runs one command: `params` is a URLSearchParams with cmd set. Returns the answer.
+async function command(params) {
+  const bytes = enc.encode(params.toString());
+  for (let i = 0; i < bytes.length; i += 512) await chars.settings.writeValueWithResponse(bytes.slice(i, i + 512));
+  await ctl('apply');
+  return dec.decode(await chars.result.readValue());
+}
+const NAMES = { site: 'Site', spot: 'Spot', notes: 'Notes', lat: 'Latitude', lon: 'Longitude', acc: 'Accuracy', height_cm: 'Height',
+  enclosure: 'Enclosure', when: 'Time', tests: 'Tests', slot: 'Spot number', wifi_ssid: 'Network name', wifi_pass: 'Password (8 characters or more)',
+  wifi_url: 'URL (http:// or https://)', ttn_deveui: 'TTN DevEUI', ttn_joineui: 'TTN JoinEUI', ttn_appkey: 'TTN AppKey', ttn_nwkkey: 'TTN NwkKey',
+  hel_deveui: 'Helium DevEUI', hel_joineui: 'Helium JoinEUI', hel_appkey: 'Helium AppKey' };
+function explain(answer) {
+  if (answer === 'busy') return 'The board is running a test. Wait for it to finish.';
+  if (answer.startsWith('invalid=')) { const f = answer.slice(8); return `The board refused: ${NAMES[f] || f} is not valid.`; }
+  return `The board answered "${answer}".`;
+}
+async function act(what, params, after) {
+  status(`${what}…`);
+  try {
+    const answer = await serial(() => command(params));
+    if (answer !== 'ok') { status(explain(answer), 'bad'); return false; }
+    await serial(refresh);
+    if (after) await after();
+    status(`${what}: done.`, 'good');
+    return true;
+  } catch (e) { status(`${what} failed: ${e.message || e}`, 'bad'); return false; }
+}
+
+const VCLS = { 'Good': 'good', 'Marginal': 'warn', 'Not usable': 'bad' };
+function verdictCell(v) { const td = document.createElement('td'); td.textContent = v; td.className = VCLS[v] || ''; return td; }
+function showInfo() {
+  $('info').textContent = `${info.get('name') || ''} · firmware ${info.get('fw') || '?'} · spot ${+info.get('spot') >= 0 ? `#${info.get('spot')}` : 'none'} · ${info.get('spots') || 0} kept`;
+  const running = info.get('state') === 'running';
+  $('step').textContent = running ? `Running: ${info.get('step')}` : (info.get('step') || '');
+  for (const b of document.querySelectorAll('[data-run]')) b.disabled = running;
+}
+function fillSpot(s) {
+  const set = (id, v) => { if (document.activeElement !== $(id)) $(id).value = v ?? ''; };
+  set('site', s.get('site')); set('spot', s.get('spot')); set('notes', s.get('notes'));
+  const h = s.get('height_cm'); set('height', h ? (h / 100).toString() : '');
+  set('enclosure', s.get('enclosure'));
+  const rows = [['WiFi', s.get('wifi')], ['The Things Network', s.get('ttn')], ['Helium', s.get('helium')]];
+  $('verdicts').replaceChildren(...rows.map(([n, v]) => { const tr = document.createElement('tr'); const td = document.createElement('td'); td.textContent = n; tr.append(td, verdictCell(v || 'Not tested')); return tr; }));
+}
+function fillKeys(s) {
+  for (const id of ['ttn_deveui', 'ttn_joineui', 'hel_deveui', 'hel_joineui', 'wifi_ssid', 'wifi_url']) if (document.activeElement !== $(id)) $(id).value = s.get(id) || '';
+  for (const id of ['ttn_appkey', 'ttn_nwkkey', 'hel_appkey', 'wifi_pass']) {
+    stored[id] = s.get(`${id}_set`) === '1';
+    $(id).placeholder = stored[id] ? 'stored; leave empty to keep it' : 'not set';
+  }
+}
+async function refresh() {
+  info = new URLSearchParams(dec.decode(await chars.info.readValue()));
+  showInfo();
+  const s = await readSettings();
+  fillSpot(s); fillKeys(s);
+  await listSpots();
+}
+async function listSpots() {
+  const lines = await readHistory('spots');
+  const cur = info.get('spot');
+  $('spots').replaceChildren(...lines.reverse().map((line) => {
+    const [idx, site, spot, when, wifi, ttn, hel] = line.split('|');
+    const tr = document.createElement('tr');
+    const cell = (t) => { const td = document.createElement('td'); td.textContent = t; return td; };
+    const open = document.createElement('button');
+    open.className = 'quiet small'; open.textContent = idx === cur ? 'current' : 'open'; open.disabled = idx === cur;
+    open.onclick = () => act(`Opening spot #${idx}`, new URLSearchParams({ cmd: 'select', slot: idx }));
+    const md = document.createElement('button');
+    md.className = 'quiet small'; md.textContent = '.md';
+    md.onclick = () => downloadMd(idx, `${site}-${spot}`);
+    const btns = document.createElement('td'); btns.append(open, ' ', md);
+    tr.append(cell(idx), cell(`${site} / ${spot}`), cell(when), verdictCell(wifi), verdictCell(ttn), verdictCell(hel), btns);
+    return tr;
+  }));
+}
+
+async function openLink() {
+  if (device.gatt.connected) device.gatt.disconnect();
+  const server = await bounded(device.gatt.connect(), 45000, 'connect');
+  const svc = await bounded(server.getPrimaryService(SVC), 45000, 'services');
+  chars = {};
+  for (const [k, u] of Object.entries(UUIDS)) chars[k] = await bounded(svc.getCharacteristic(u), 45000, 'services');
+  status('Checking pairing: if asked, type the code shown on the board…');
+  await serial(refresh);  // the first protected read starts pairing
+}
+async function connect() {
+  status('Pick the scanner and press Pair. If this phone has not paired with it yet, the 6-digit code is asked next.');
+  const picked = await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC] }] });
+  if (picked !== device) {
+    if (device && device.gatt.connected) device.gatt.disconnect();
+    device = picked;
+    device.addEventListener('gattserverdisconnected', () => { clearInterval(poll); poll = null; status('Disconnected. Press Connect to go on.', 'bad'); });
+  }
+  // A phone that kept a key from an earlier pairing is dropped once; the second try pairs afresh.
+  for (let tries = 1; ; tries++) {
+    try { status('Connecting…'); await openLink(); break; } catch (e) {
+      if (device.gatt.connected) device.gatt.disconnect();
+      if (tries === 2) throw new Error(`${e.message || e}. Try again; if it keeps failing, remove ${device.name} from the phone's Bluetooth devices first.`);
+      await sleep(1500);
+    }
+  }
+  $('app').hidden = false;
+  status(`Connected to ${device.name}.`, 'good');
+  clearInterval(poll);
+  let wasRunning = info.get('state') === 'running';
+  poll = setInterval(() => serial(async () => {
+    if (!device.gatt.connected) return;
+    info = new URLSearchParams(dec.decode(await chars.info.readValue()));
+    showInfo();
+    const running = info.get('state') === 'running';
+    if (wasRunning && !running) { await refresh(); status('Tests finished.', 'good'); }
+    wasRunning = running;
+  }).catch(() => {}), 2000);
+}
+
+function spotParams(fresh) {
+  for (const id of ['site', 'spot', 'lat', 'lon', 'height']) if (!$(id).reportValidity()) return null;
+  const p = new URLSearchParams({ cmd: 'spot', site: $('site').value.trim(), spot: $('spot').value.trim(), notes: $('notes').value.trim() });
+  if (fresh) p.set('new', '1');
+  if ($('height').value !== '') p.set('height_cm', Math.round(parseFloat($('height').value) * 100));
+  if ($('enclosure').value) p.set('enclosure', $('enclosure').value);
+  const lat = $('lat').value.trim(), lon = $('lon').value.trim();
+  if (lat || lon) {
+    if (!lat || !lon) { status('Give both latitude and longitude, or neither.', 'bad'); return null; }
+    p.set('lat', lat); p.set('lon', lon);
+    if (accuracy) p.set('acc', Math.round(accuracy));
+  }
+  p.set('when', Math.floor(Date.now() / 1000));
+  return p;
+}
+function gps() {
+  if (!navigator.geolocation) { status('This browser gives no position.', 'bad'); return; }
+  status('Getting the phone position…');
+  navigator.geolocation.getCurrentPosition((pos) => {
+    $('lat').value = pos.coords.latitude.toFixed(6);
+    $('lon').value = pos.coords.longitude.toFixed(6);
+    accuracy = pos.coords.accuracy;
+    $('acchint').textContent = `Accurate to about ${Math.round(accuracy)} m. Press Save to keep it with the spot.`;
+    status('Position filled in.', 'good');
+  }, (e) => status(`No position: ${e.message}`, 'bad'), { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+}
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name.replace(/[^\w.-]+/g, '_');
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function downloadMd(slot, name) {
+  status('Reading the report…');
+  try { const lines = await serial(() => readHistory(`md=${slot}`)); download(`${name}.md`, lines.join('\n') + '\n', 'text/markdown'); status('Report downloaded.', 'good'); }
+  catch (e) { status(`Reading failed: ${e.message || e}`, 'bad'); }
+}
+async function keysParams() {
+  const p = new URLSearchParams({ cmd: 'keys' });
+  for (const el of document.querySelectorAll('input.key')) {
+    let v = el.value.replace(/[\s:-]/g, '').toUpperCase();
+    if (el.classList.contains('secret')) {
+      if (v === '') continue;            // keep the stored key
+      if (v === 'CLEAR') v = '';         // remove it
+    }
+    if (v !== '' && !new RegExp(`^[0-9A-F]{${el.dataset.bytes * 2}}$`).test(v)) {
+      status(`${NAMES[el.id]} needs ${el.dataset.bytes * 2} hex digits.`, 'bad'); el.focus(); return null;
+    }
+    p.set(el.id, v);
+  }
+  return p;
+}
+
+$('connect').onclick = () => connect().catch((e) => status(e.message || String(e), 'bad'));
+$('gps').onclick = gps;
+$('save').onclick = () => { const p = spotParams(false); if (p) act('Saving the spot', p); };
+$('newspot').onclick = () => { const p = spotParams(true); if (p) act('Starting a new spot', p, async () => { $('md').hidden = true; }); };
+for (const b of document.querySelectorAll('[data-run]')) {
+  b.onclick = () => act('Starting the tests', new URLSearchParams({ cmd: 'run', tests: b.dataset.run }));
+}
+$('showmd').onclick = async () => {
+  const slot = info.get('spot');
+  if (!(+slot >= 0)) { status('Save a spot first.', 'bad'); return; }
+  try { $('md').textContent = (await serial(() => readHistory(`md=${slot}`))).join('\n'); $('md').hidden = false; }
+  catch (e) { status(`Reading failed: ${e.message || e}`, 'bad'); }
+};
+$('dlcsv').onclick = async () => {
+  status('Reading every spot…');
+  try {
+    const lines = await serial(() => readHistory('csv'));
+    download(`site-scan-${new Date().toISOString().slice(0, 10)}.csv`, lines.join('\n') + '\n', 'text/csv');
+    status('CSV downloaded.', 'good');
+  } catch (e) { status(`Reading failed: ${e.message || e}`, 'bad'); }
+};
+$('clear').onclick = () => { if (confirm('Delete every spot on the board? This cannot be undone.')) act('Deleting all spots', new URLSearchParams({ cmd: 'clear' })); };
+$('savekeys').onclick = async () => { const p = await keysParams(); if (p && await act('Saving the keys', p)) for (const el of document.querySelectorAll('input.secret')) el.value = ''; };
+$('savewifi').onclick = async () => {
+  const p = new URLSearchParams({ cmd: 'wifi', wifi_ssid: $('wifi_ssid').value, wifi_url: $('wifi_url').value.trim() });
+  if ($('wifi_pass').value) p.set('wifi_pass', $('wifi_pass').value);
+  if (await act('Saving WiFi', p)) $('wifi_pass').value = '';
+};
+if (!navigator.bluetooth) {
+  $('connect').disabled = true;
+  status('This browser has no Web Bluetooth. Use Chrome on Android, or the Bluefy browser on iPhone.', 'bad');
+}
+</script>
+</body>
+</html>
