@@ -1,0 +1,5 @@
+dependencies:
+  idf: ">=6.0.0"
+  radiolib:
+    git: https://github.com/jgromes/RadioLib.git
+    version: "7.8.1"

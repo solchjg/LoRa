@@ -1,0 +1,50 @@
+menu "LoRa survey"
+
+config SURVEY_DEV_EUI
+    string "DevEUI, 16 hex digits (from the network's console)"
+    default ""
+
+config SURVEY_JOIN_EUI
+    string "JoinEUI (AppEUI), 16 hex digits"
+    default "0000000000000000"
+
+config SURVEY_APP_KEY
+    string "AppKey, 32 hex digits"
+    default ""
+
+config SURVEY_NWK_KEY
+    string "NwkKey, 32 hex digits; empty for LoRaWAN 1.0.x (Helium, or TTN set to 1.0.x)"
+    default ""
+
+config SURVEY_SUBBAND
+    int "US915 sub-band (TTN and Helium in the US use 2)"
+    range 1 8
+    default 2
+
+config SURVEY_TX_DBM
+    int "Transmit power in dBm"
+    range 2 22
+    default 20
+    help
+        The SX1262's output. 20 dBm is a fair stand-in for a field device;
+        a lower value shows how much margin a weaker radio would keep.
+
+choice SURVEY_MODE
+    prompt "What one round sends"
+    default SURVEY_MODE_LADDER
+    config SURVEY_MODE_LADDER
+        bool "Ladder: SF7 first, then SF8, SF9, SF10 until a gateway answers (at most one downlink)"
+    config SURVEY_MODE_ALL
+        bool "All: one uplink at each of SF7 - SF10 (up to four downlinks; private gateway or Helium)"
+endchoice
+
+config SURVEY_EVERY_S
+    int "Seconds between automatic rounds (0: only on a key press)"
+    range 0 3600
+    default 0
+    help
+        On The Things Network keep a round to a few a day per device in
+        normal use: the fair use policy allows 30 s of airtime and 10
+        downlinks a day.
+
+endmenu

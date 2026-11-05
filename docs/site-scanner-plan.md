@@ -14,7 +14,7 @@ well. The question is **feasibility at that location**. Cost is out of scope for
 | Connection | Now | Hardware |
 |---|---|---|
 | **WiFi** | Yes | the Heltec WiFi LoRa 32 V3 alone |
-| **LoRaWAN** (TTN, Helium) | Yes | the Heltec alone (the survey in `commissioning/lora-survey` of tdisplay-s3-amoled moves in as one test) |
+| **LoRaWAN** (TTN, Helium) | Yes | the Heltec alone (the survey in `firmware/survey` moves in as one test) |
 | **LoRa point-to-point** | Yes | two Heltec boards: a **field unit** at the location and a **base beacon** where the data would land |
 | Cellular, satellite | Later | Notecard on I2C, Notecard for Skylo, Starnote for Iridium (see the feasibility analysis) |
 

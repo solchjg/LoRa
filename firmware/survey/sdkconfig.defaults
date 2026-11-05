@@ -1,0 +1,8 @@
+# Heltec WiFi LoRa 32 V3 (ESP32-S3, 8 MB flash, SX1262), one large app,
+# console on UART0 through the board's USB-UART bridge.
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+# RadioLib's ESP-IDF HAL times the LoRaWAN receive windows with delay(), so it
+# needs a 1 ms tick.
+CONFIG_FREERTOS_HZ=1000
