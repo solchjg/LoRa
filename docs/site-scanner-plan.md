@@ -118,7 +118,7 @@ RadioLib for the SX1262 and the probes' SSD1306 screen.
 | Phase | Adds | Hardware |
 |---|---|---|
 | 1 | The scanner frame: the Bluetooth page, spot details, flash storage, Markdown and CSV download; the WiFi test; the LoRaWAN survey moved in as a test | Heltec V3 |
-| 2 | The base beacon firmware and the P2P test. Direction: the bearing and distance to a beacon or gateway whose position is known, and a "turn slowly" test that plots signal strength against the phone's compass heading (sharper with a small directional antenna) | V3 + first GPS board |
+| 2 | The base beacon firmware and the P2P test. Direction: the bearing and distance to a beacon or gateway whose position is known, and a "turn slowly" test that plots signal strength against the phone's compass heading with a small directional 915 MHz antenna (a patch or a short Yagi, about 6 – 9 dBi, beam about 60°; at 20 dBm out that stays under the 36 dBm EIRP limit of part 15.247). A mount that holds the board on the back of the phone, powered from the phone's USB-C port (about 150 mA at most), so the antenna turns with the compass; the antenna stands off the phone on a short pigtail, because the phone and the hand detune it | V3 + first GPS board |
 | 3 | GPS position from the board; the GPS board's pins (and its screen, if it differs) | GPS board |
 | later | Cellular and satellite tests | Notecard parts |
 
