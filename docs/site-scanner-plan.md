@@ -34,7 +34,7 @@ Each connection gets one verdict per spot: **Good**, **Marginal**, **Not usable*
 | Connection | Test | Measures | Good | Marginal | Not usable |
 |---|---|---|---|---|---|
 | WiFi | Scan 30 s on all channels. With credentials, also connect, get DHCP and DNS, and make one HTTPS request to a URL you give (for example the ThingsBoard server) | per network: SSID, channel, RSSI, security; connect time, HTTPS round trip | RSSI ≥ −67 dBm and the HTTPS request succeeds | −67 to −75 dBm, or it connects only some of the time | below −80 dBm, or no connect |
-| LoRaWAN | 3 – 5 ladder rounds (SF7 → SF10, LinkCheck) | margin, gateways, lowest SF that answers, downlink RSSI and SNR | SF7 answers with margin ≥ 10 dB | answers at SF7 with < 10 dB, or only at SF8 – SF10 | no join, or no answer at any SF |
+| LoRaWAN | 3 – 5 ladder rounds (SF7 → SF10, LinkCheck), run once on TTN and once on Helium, each a verdict of its own | margin, gateways, lowest SF that answers, downlink RSSI and SNR | SF7 answers with margin ≥ 10 dB | answers at SF7 with < 10 dB, or only at SF8 – SF10 | no join, or no answer at any SF |
 | LoRa P2P | Ping-pong with the base beacon, 10 pings at each step: SF7 – SF10 at 125 kHz, then SF11 – SF12 at 500 kHz | packets that arrive each way, RSSI, SNR at both ends, the fastest SF with ≥ 9 of 10 | ≥ 9 of 10 at SF9/125 kHz or faster, and SNR at least 5 dB above that SF's floor | ≥ 9 of 10 only at SF10/125 kHz or SF11 – SF12/500 kHz | < 9 of 10 at every step |
 
 The WiFi bands are the usual −67 dBm design point for a reliable link. The LoRaWAN bands
@@ -44,6 +44,18 @@ match the survey's guide. The P2P floor is the SX1262's demodulation limit: abou
 
 Readings are taken where the sensor would be mounted, at its height. The report notes
 whether the board was inside the planned enclosure, because an enclosure costs a few dB.
+
+## TTN and Helium
+
+The two networks have different gateways, so a spot can have one without the other, and
+rural coverage often differs most. One device can't be registered on both with the same
+DevEUI, so the scanner holds two registrations (two DevEUIs and keys) and joins each in
+turn. Helium is LoRaWAN 1.0.x only, so its registration has no NwkKey. Its messages are
+paid in data credits ($0.00001 per 24 bytes), which is nothing for a survey, but the
+account needs a small prepaid balance. One thing to check on the first run is whether
+the Helium network server answers LinkCheckReq. If it doesn't, the test falls back to
+confirmed uplinks, and the ACK shows the uplink was heard; the margin and gateway count
+then come only from the Helium console.
 
 ## Point-to-point test in detail
 
@@ -112,6 +124,8 @@ first GPS board arrives.
 
 - **SCN-1** [proposed] The scanner shall test WiFi, LoRaWAN and LoRa point-to-point at one
   spot, each test started on its own or all together.
+- **SCN-1a** [proposed] The LoRaWAN test shall run on The Things Network and on Helium,
+  each with its own device registration and keys, and report a verdict for each.
 - **SCN-2** [proposed] Each test shall give a verdict (Good, Marginal, Not usable, Not
   tested) by the pass marks above, with the measured values.
 - **SCN-3** [proposed] The field unit shall serve a report page from its own access point,
